@@ -16,6 +16,11 @@ namespace OSUMapDownloader
         const string API_CLIENT_SECRET = "ome2pYxl5kVoQIdzFzRL1DzV0RoDUeVOeMIQ7F8R";
 
         const string DOWNLOAD_LINK_1 = "https://chimu.moe/d";
+        const string DOWNLOAD_LINK_2 = "https://beatconnect.io/b/919187";
+        const string DOWNLOAD_LINK_3 = "https://nerina.pw/d/919187";
+        const string DOWNLOAD_LINK_4 = "https://dl.sayobot.cn/beatmaps/download/full/id";
+        const string DOWNLOAD_LINK_5 = "https://dl.sayobot.cn/beatmaps/download/novideo/919187";
+
         const string API_ENDPOINT = "https://osu.ppy.sh/api/v2/";
         static Uri oauthURI = new Uri($"https://osu.ppy.sh/oauth/authorize?client_id={API_CLIENT_ID}&redirect_uri=http://localhost:31170/&response_type=code&scope=public");
         static Uri tokenURI = new Uri("https://osu.ppy.sh/oauth/token");
@@ -32,12 +37,14 @@ namespace OSUMapDownloader
 
         private CancellationTokenSource src;
 
+        private CookieContainer cookies = new CookieContainer();
+
+        private OsuSettings _config = new OsuSettings();
+
         private bool _isRunning = false;
         private bool _stopRequested = false;
 
-        CookieContainer cookies = new CookieContainer();
-
-        private OsuSettings _config = new OsuSettings(); 
+        private object _gridLocalLock = new object();
 
         public MainForm()
         {
@@ -89,7 +96,7 @@ namespace OSUMapDownloader
             grid_localFiles.DataSource = _localBeatMapList;
             grid_remoteFiles.DataSource = _beatMapList;
 
-            _localFileWatcher = new FileSystemWatcher($@"{Application.StartupPath}/download/");
+            _localFileWatcher = new FileSystemWatcher(_config.saveLocationPath!);
 
             _localFileWatcher.EnableRaisingEvents = true;
             _localFileWatcher.SynchronizingObject = this;
@@ -99,7 +106,6 @@ namespace OSUMapDownloader
             _localFileWatcher.Changed += localFileWatcher_Event;
             _localFileWatcher.Deleted += localFileWatcher_Event;
             _localFileWatcher.Renamed += localFileWatcher_Event;
-            RefreshLocalSong();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -116,7 +122,10 @@ namespace OSUMapDownloader
 
             _config.SettingsSaving += _config_SettingsSaving;
 
+            tb_saveLocationPath.Text = _config.saveLocationPath;
             tb_token.Text = _config.token?.AccessToken! ?? "";
+
+            RefreshLocalSong();
         }
 
         private void _config_SettingsSaving(object sender, CancelEventArgs e)
@@ -266,6 +275,7 @@ namespace OSUMapDownloader
             if (_beatMapList.Count > 0 && _beatMapList.Any(item => item.State != BeatMap.StateEnum.DOWNLOADED))
             {
                 int count = 0;
+                int worker = (int)tb_workerCount.Value;
 
                 _isRunning = true;
                 _stopRequested = false;
@@ -287,7 +297,7 @@ namespace OSUMapDownloader
                 try
                 {
                     IList<BeatMap> downloadList = _beatMapList.Where(m => m.State != BeatMap.StateEnum.DOWNLOADED).ToList();
-                    var options = new ParallelOptions { MaxDegreeOfParallelism = 2, CancellationToken = src.Token };
+                    var options = new ParallelOptions { MaxDegreeOfParallelism = worker, CancellationToken = src.Token };
                     int percentComplete = 0;
 
                     await Parallel.ForEachAsync(downloadList, options, async (song, token) =>
@@ -479,7 +489,29 @@ namespace OSUMapDownloader
 
                 src.Dispose();
             }
+        }
 
+        private void btn_changeSaveLocationPath_Click(object sender, EventArgs e)
+        {
+            if (_isRunning)
+            {
+                MessageBox.Show("Operation disabled when task is running.");
+                return;
+            }
+
+            using (var fbd = new FolderBrowserDialog())
+            {
+                fbd.InitialDirectory = Application.StartupPath;
+                DialogResult result = fbd.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    _config.saveLocationPath = fbd.SelectedPath;
+                    tb_saveLocationPath.Text = _config.saveLocationPath;
+
+                    RefreshLocalSong();
+                }
+            }
         }
 
         private void tb_token_Leave(object sender, EventArgs e)
@@ -533,11 +565,13 @@ namespace OSUMapDownloader
             this.cb_mode.Enabled = enabled;
             this.tb_findCount.Enabled = enabled;
             this.tb_token.Enabled = enabled;
+            this.tb_findCount.Enabled = enabled;
         }
 
         private void RefreshLocalSong()
         {
-            var songs = new DirectoryInfo(@"download/").GetFileSystemInfos();
+            _localFileWatcher.Path = _config.saveLocationPath!;
+            var songs = new DirectoryInfo(_config.saveLocationPath!).GetFileSystemInfos();
             var songInfos = new List<BeatMap>();
 
             foreach (var song in songs)
@@ -549,22 +583,40 @@ namespace OSUMapDownloader
                 if (!Regex.IsMatch(parts[0], "^[0-9]+$"))
                     continue;
 
+                int id = int.Parse(parts[0]);
                 string? name = parts.Length > 1 ? song.Name.Substring(parts[0].Length + 1) : null;
 
                 // Remove extension
                 if (!string.IsNullOrEmpty(song.Extension) && song.Extension == ".osz")
                     name = name!.Substring(0, name.Length - 4);
 
-                songInfos.Add(new BeatMap(int.Parse(parts[0]), name));
+                songInfos.Add(new BeatMap(id, name));
+
+                /*
+                 * TODO
+                 * CHECK IF ON REMOTE EXIST
+                var item = _beatMapList.Where(x => x.Id == id).FirstOrDefault();
+                if (item != null)
+                {
+                    item.State = BeatMap.StateEnum.DOWNLOADED;
+                }
+
+                _beatMapList.Except(songInfos).ToList().ForEach();
+                */
             }
 
-            Debug.WriteLine($"FOUND {songInfos.Count} songs");
+            this.Invoke(() => Log($"Found {songInfos.Count} songs in local folder."));
 
-            lock (grid_localFiles)
+            lock (_gridLocalLock)
             {
                 _localBeatMapList.Clear();
                 songInfos.ForEach(x => _localBeatMapList.Add(x));
             }
+        }
+
+        private void cmBtn_grid_local_refresh_Click(object sender, EventArgs e)
+        {
+            RefreshLocalSong();
         }
 
         async Task<BeatMapSetsResponse?> FetchBeatmap(string query = "", int mode = -1, string? cursor = "", CancellationToken cancellationToken = default)
@@ -607,17 +659,19 @@ namespace OSUMapDownloader
             this.Invoke(() =>
             {
                 Log($"Downloading [{map.Id}] {map.Title} (Thread {Thread.CurrentThread.ManagedThreadId})");
-                Debug.WriteLine($"[Thread {Thread.CurrentThread.ManagedThreadId}] Downloading {map.Title}...");
-                Debug.WriteLine($@"{Application.StartupPath}/download/{map.Id} {map.Artist} - {map.Title}.osz");
+                //Debug.WriteLine($"[Thread {Thread.CurrentThread.ManagedThreadId}] Downloading {map.Title}...");
+                //Debug.WriteLine($@"{Application.StartupPath}/download/{map.Id} {map.Artist} - {map.Title}.osz");
             });
 
             try
             {
                 map.State = BeatMap.StateEnum.DOWNLOADING;
 
+                token.ThrowIfCancellationRequested();
                 var responseStream = await _downloadClient!.GetStreamAsync($"{DOWNLOAD_LINK_1}/{map.Id}", token);
-                using var fileStream = new FileStream($@"{Application.StartupPath}/download/{map.GetSongFileName()}", FileMode.Create);
-                await responseStream.CopyToAsync(fileStream);
+
+                using var fileStream = new FileStream($@"{_config.saveLocationPath}/{map.GetSongFileName()}", FileMode.Create);
+                await responseStream.CopyToAsync(fileStream, token);
                 
                 map.State = BeatMap.StateEnum.DOWNLOADED;
 

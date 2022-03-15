@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.btn_exit = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -46,6 +47,8 @@
             this.grid_localFiles = new System.Windows.Forms.DataGridView();
             this.grid_localFiles_id = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.grid_localFiles_title = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cm_grid_local = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.cmBtn_grid_local_refresh = new System.Windows.Forms.ToolStripMenuItem();
             this.grid_remoteFiles = new System.Windows.Forms.DataGridView();
             this.grid_remoteFiles_id = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.grid_remoteFiles_title = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -57,10 +60,20 @@
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.label4 = new System.Windows.Forms.Label();
             this.btn_about = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.tb_workerCount = new System.Windows.Forms.NumericUpDown();
+            this.label8 = new System.Windows.Forms.Label();
+            this.btn_changeSaveLocationPath = new System.Windows.Forms.Button();
+            this.tb_saveLocationPath = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grid_localFiles)).BeginInit();
+            this.cm_grid_local.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grid_remoteFiles)).BeginInit();
             this.tableLayoutPanel1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tb_workerCount)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_exit
@@ -211,6 +224,7 @@
             this.grid_localFiles.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.grid_localFiles_id,
             this.grid_localFiles_title});
+            this.grid_localFiles.ContextMenuStrip = this.cm_grid_local;
             this.grid_localFiles.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.grid_localFiles.Location = new System.Drawing.Point(12, 131);
             this.grid_localFiles.MultiSelect = false;
@@ -239,6 +253,20 @@
             this.grid_localFiles_title.HeaderText = "Title";
             this.grid_localFiles_title.Name = "grid_localFiles_title";
             this.grid_localFiles_title.ReadOnly = true;
+            // 
+            // cm_grid_local
+            // 
+            this.cm_grid_local.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cmBtn_grid_local_refresh});
+            this.cm_grid_local.Name = "contextMenuStrip1";
+            this.cm_grid_local.Size = new System.Drawing.Size(114, 26);
+            // 
+            // cmBtn_grid_local_refresh
+            // 
+            this.cmBtn_grid_local_refresh.Name = "cmBtn_grid_local_refresh";
+            this.cmBtn_grid_local_refresh.Size = new System.Drawing.Size(113, 22);
+            this.cmBtn_grid_local_refresh.Text = "Refresh";
+            this.cmBtn_grid_local_refresh.Click += new System.EventHandler(this.cmBtn_grid_local_refresh_Click);
             // 
             // grid_remoteFiles
             // 
@@ -289,10 +317,10 @@
             // rtb_logBox
             // 
             this.rtb_logBox.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.rtb_logBox.Location = new System.Drawing.Point(555, 12);
+            this.rtb_logBox.Location = new System.Drawing.Point(555, 131);
             this.rtb_logBox.Name = "rtb_logBox";
             this.rtb_logBox.ReadOnly = true;
-            this.rtb_logBox.Size = new System.Drawing.Size(298, 515);
+            this.rtb_logBox.Size = new System.Drawing.Size(298, 396);
             this.rtb_logBox.TabIndex = 6;
             this.rtb_logBox.Text = "";
             // 
@@ -356,11 +384,94 @@
             this.btn_about.UseVisualStyleBackColor = true;
             this.btn_about.Click += new System.EventHandler(this.btn_about_Click);
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.label9);
+            this.groupBox2.Controls.Add(this.tb_workerCount);
+            this.groupBox2.Controls.Add(this.label8);
+            this.groupBox2.Controls.Add(this.btn_changeSaveLocationPath);
+            this.groupBox2.Controls.Add(this.tb_saveLocationPath);
+            this.groupBox2.Controls.Add(this.label7);
+            this.groupBox2.Location = new System.Drawing.Point(555, 12);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(298, 113);
+            this.groupBox2.TabIndex = 13;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Setting";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(223, 83);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(33, 15);
+            this.label9.TabIndex = 5;
+            this.label9.Text = "BETA";
+            // 
+            // tb_workerCount
+            // 
+            this.tb_workerCount.Location = new System.Drawing.Point(61, 81);
+            this.tb_workerCount.Maximum = new decimal(new int[] {
+            6,
+            0,
+            0,
+            0});
+            this.tb_workerCount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.tb_workerCount.Name = "tb_workerCount";
+            this.tb_workerCount.Size = new System.Drawing.Size(150, 23);
+            this.tb_workerCount.TabIndex = 4;
+            this.tb_workerCount.Value = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(6, 83);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(45, 15);
+            this.label8.TabIndex = 3;
+            this.label8.Text = "Worker";
+            // 
+            // btn_changeSaveLocationPath
+            // 
+            this.btn_changeSaveLocationPath.Location = new System.Drawing.Point(217, 45);
+            this.btn_changeSaveLocationPath.Name = "btn_changeSaveLocationPath";
+            this.btn_changeSaveLocationPath.Size = new System.Drawing.Size(75, 23);
+            this.btn_changeSaveLocationPath.TabIndex = 2;
+            this.btn_changeSaveLocationPath.Text = "Change";
+            this.btn_changeSaveLocationPath.UseVisualStyleBackColor = true;
+            this.btn_changeSaveLocationPath.Click += new System.EventHandler(this.btn_changeSaveLocationPath_Click);
+            // 
+            // tb_saveLocationPath
+            // 
+            this.tb_saveLocationPath.Location = new System.Drawing.Point(6, 46);
+            this.tb_saveLocationPath.Name = "tb_saveLocationPath";
+            this.tb_saveLocationPath.ReadOnly = true;
+            this.tb_saveLocationPath.Size = new System.Drawing.Size(205, 23);
+            this.tb_saveLocationPath.TabIndex = 1;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(6, 28);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(53, 15);
+            this.label7.TabIndex = 0;
+            this.label7.Text = "Location";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(865, 580);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.btn_about);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.btn_clearLog);
@@ -375,15 +486,19 @@
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "OSU! Map Downloader";
+            this.Text = "osu! Map Downloader";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grid_localFiles)).EndInit();
+            this.cm_grid_local.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.grid_remoteFiles)).EndInit();
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tb_workerCount)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -417,5 +532,14 @@
         private Label label6;
         private TextBox tb_token;
         private Button btn_about;
+        private GroupBox groupBox2;
+        private Button btn_changeSaveLocationPath;
+        private TextBox tb_saveLocationPath;
+        private Label label7;
+        private Label label9;
+        private NumericUpDown tb_workerCount;
+        private Label label8;
+        private ContextMenuStrip cm_grid_local;
+        private ToolStripMenuItem cmBtn_grid_local_refresh;
     }
 }

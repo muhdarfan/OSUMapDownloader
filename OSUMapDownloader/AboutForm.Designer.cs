@@ -44,7 +44,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(360, 36);
             this.label1.TabIndex = 0;
-            this.label1.Text = "OSUMapDownloader";
+            this.label1.Text = "osu! Map Downloader";
             this.label1.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             // 
             // txt_labelVersion
@@ -115,7 +115,7 @@
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "OSUMapDownloader by IncikWeskerzzz";
+            this.Text = "osu! Map Downloader by IncikWeskerzzz";
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
