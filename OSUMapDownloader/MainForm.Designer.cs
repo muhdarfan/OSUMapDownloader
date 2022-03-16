@@ -61,12 +61,13 @@
             this.label4 = new System.Windows.Forms.Label();
             this.btn_about = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.label9 = new System.Windows.Forms.Label();
+            this.cb_hideDownloaded = new System.Windows.Forms.CheckBox();
             this.tb_workerCount = new System.Windows.Forms.NumericUpDown();
             this.label8 = new System.Windows.Forms.Label();
             this.btn_changeSaveLocationPath = new System.Windows.Forms.Button();
             this.tb_saveLocationPath = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.cb_enableWatch = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grid_localFiles)).BeginInit();
             this.cm_grid_local.SuspendLayout();
@@ -335,9 +336,9 @@
             // 
             this.lbl_total_fetched.AutoSize = true;
             this.lbl_total_fetched.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lbl_total_fetched.Location = new System.Drawing.Point(69, 0);
+            this.lbl_total_fetched.Location = new System.Drawing.Point(54, 0);
             this.lbl_total_fetched.Name = "lbl_total_fetched";
-            this.lbl_total_fetched.Size = new System.Drawing.Size(198, 23);
+            this.lbl_total_fetched.Size = new System.Drawing.Size(94, 23);
             this.lbl_total_fetched.TabIndex = 9;
             this.lbl_total_fetched.Text = "0";
             // 
@@ -354,23 +355,24 @@
             // tableLayoutPanel1
             // 
             this.tableLayoutPanel1.ColumnCount = 2;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.5F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 75.5F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.77483F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 66.22517F));
             this.tableLayoutPanel1.Controls.Add(this.lbl_total_fetched, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.label4, 0, 0);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(273, 533);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(398, 533);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(270, 23);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(151, 23);
             this.tableLayoutPanel1.TabIndex = 11;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
+            this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label4.Location = new System.Drawing.Point(3, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(41, 15);
+            this.label4.Size = new System.Drawing.Size(45, 23);
             this.label4.TabIndex = 10;
             this.label4.Text = "Found";
             // 
@@ -386,7 +388,7 @@
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.label9);
+            this.groupBox2.Controls.Add(this.cb_hideDownloaded);
             this.groupBox2.Controls.Add(this.tb_workerCount);
             this.groupBox2.Controls.Add(this.label8);
             this.groupBox2.Controls.Add(this.btn_changeSaveLocationPath);
@@ -399,18 +401,19 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Setting";
             // 
-            // label9
+            // cb_hideDownloaded
             // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(223, 83);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(33, 15);
-            this.label9.TabIndex = 5;
-            this.label9.Text = "BETA";
+            this.cb_hideDownloaded.AutoSize = true;
+            this.cb_hideDownloaded.Location = new System.Drawing.Point(6, 82);
+            this.cb_hideDownloaded.Name = "cb_hideDownloaded";
+            this.cb_hideDownloaded.Size = new System.Drawing.Size(121, 19);
+            this.cb_hideDownloaded.TabIndex = 5;
+            this.cb_hideDownloaded.Text = "Hide Downloaded";
+            this.cb_hideDownloaded.UseVisualStyleBackColor = true;
             // 
             // tb_workerCount
             // 
-            this.tb_workerCount.Location = new System.Drawing.Point(61, 81);
+            this.tb_workerCount.Location = new System.Drawing.Point(217, 81);
             this.tb_workerCount.Maximum = new decimal(new int[] {
             6,
             0,
@@ -422,7 +425,7 @@
             0,
             0});
             this.tb_workerCount.Name = "tb_workerCount";
-            this.tb_workerCount.Size = new System.Drawing.Size(150, 23);
+            this.tb_workerCount.Size = new System.Drawing.Size(75, 23);
             this.tb_workerCount.TabIndex = 4;
             this.tb_workerCount.Value = new decimal(new int[] {
             3,
@@ -433,7 +436,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(6, 83);
+            this.label8.Location = new System.Drawing.Point(166, 83);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(45, 15);
             this.label8.TabIndex = 3;
@@ -466,11 +469,25 @@
             this.label7.TabIndex = 0;
             this.label7.Text = "Location";
             // 
+            // cb_enableWatch
+            // 
+            this.cb_enableWatch.AutoSize = true;
+            this.cb_enableWatch.Checked = true;
+            this.cb_enableWatch.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cb_enableWatch.Location = new System.Drawing.Point(273, 533);
+            this.cb_enableWatch.Name = "cb_enableWatch";
+            this.cb_enableWatch.Size = new System.Drawing.Size(119, 19);
+            this.cb_enableWatch.TabIndex = 14;
+            this.cb_enableWatch.Text = "Enable File Watch";
+            this.cb_enableWatch.UseVisualStyleBackColor = true;
+            this.cb_enableWatch.CheckedChanged += new System.EventHandler(this.cb_enableWatch_CheckedChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(865, 580);
+            this.Controls.Add(this.cb_enableWatch);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.btn_about);
             this.Controls.Add(this.tableLayoutPanel1);
@@ -500,6 +517,7 @@
             this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.tb_workerCount)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -536,10 +554,11 @@
         private Button btn_changeSaveLocationPath;
         private TextBox tb_saveLocationPath;
         private Label label7;
-        private Label label9;
         private NumericUpDown tb_workerCount;
         private Label label8;
         private ContextMenuStrip cm_grid_local;
         private ToolStripMenuItem cmBtn_grid_local_refresh;
+        private CheckBox cb_hideDownloaded;
+        private CheckBox cb_enableWatch;
     }
 }

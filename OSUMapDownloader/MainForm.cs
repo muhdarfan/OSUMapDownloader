@@ -25,6 +25,8 @@ namespace OSUMapDownloader
         static Uri oauthURI = new Uri($"https://osu.ppy.sh/oauth/authorize?client_id={API_CLIENT_ID}&redirect_uri=http://localhost:31170/&response_type=code&scope=public");
         static Uri tokenURI = new Uri("https://osu.ppy.sh/oauth/token");
 
+        private DateTime _lastTimeFileWatch;
+
         private BindingList<BeatMap> _beatMapList, _localBeatMapList;
 
         //static RestClient _client;
@@ -99,7 +101,8 @@ namespace OSUMapDownloader
             _localFileWatcher = new FileSystemWatcher(_config.saveLocationPath!);
 
             _localFileWatcher.EnableRaisingEvents = true;
-            _localFileWatcher.SynchronizingObject = this;
+            _localFileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.DirectoryName;
+            //_localFileWatcher.SynchronizingObject = this;
             _localFileWatcher.Filter = "*.osz";
 
             _localFileWatcher.Created += localFileWatcher_Event;
@@ -135,7 +138,17 @@ namespace OSUMapDownloader
 
         private void localFileWatcher_Event(object sender, FileSystemEventArgs e)
         {
+            if (_isRunning)
+                return;
+
             RefreshLocalSong();
+
+            /*
+            if (DateTime.Now.Subtract(_lastTimeFileWatch).TotalMilliseconds < 500 || _isRunning)
+                return;
+
+            _lastTimeFileWatch = DateTime.Now;
+            */
         }
 
         private async void btn_find_Click(object sender, EventArgs e)
@@ -172,6 +185,9 @@ namespace OSUMapDownloader
                     src = new CancellationTokenSource();
                     var ct = src.Token;
 
+                    if (!_localFileWatcher.EnableRaisingEvents)
+                        RefreshLocalSong();
+
                     Log("Searching...");
                     _isRunning = true;
                     progressBar1.Value += 10;
@@ -199,6 +215,9 @@ namespace OSUMapDownloader
                                 {
                                     if (_beatMapList.Count >= stopAfter)
                                         break;
+
+                                    if (cb_hideDownloaded.Checked && _localBeatMapList.Any(item => item.Id == bm.Id))
+                                        continue;
 
                                     if (_localBeatMapList.Any(item => item.Id == bm.Id))
                                         bm.State = BeatMap.StateEnum.DOWNLOADED;
@@ -342,6 +361,8 @@ namespace OSUMapDownloader
                     progressBar1.Value = 100;
                     MessageBox.Show($"Downloaded {count} songs.");
                     Log($"Downloaded {count} songs [Elapsed Time: {_sw.Elapsed.Seconds} seconds]");
+
+                    RefreshLocalSong();
 
                     src.Dispose();
                 }
@@ -509,6 +530,7 @@ namespace OSUMapDownloader
                     _config.saveLocationPath = fbd.SelectedPath;
                     tb_saveLocationPath.Text = _config.saveLocationPath;
 
+                    _localFileWatcher.Path = fbd.SelectedPath;
                     RefreshLocalSong();
                 }
             }
@@ -550,6 +572,11 @@ namespace OSUMapDownloader
             _config.Save();
         }
 
+        private void cmBtn_grid_local_refresh_Click(object sender, EventArgs e)
+        {
+            RefreshLocalSong();
+        }
+
         #region Method
         private void Log(string message = "", bool newLine = true)
         {
@@ -566,11 +593,25 @@ namespace OSUMapDownloader
             this.tb_findCount.Enabled = enabled;
             this.tb_token.Enabled = enabled;
             this.tb_findCount.Enabled = enabled;
+            this.tb_workerCount.Enabled = enabled;
+            this.cb_hideDownloaded.Enabled = enabled;
+            this.cb_enableWatch.Enabled = enabled;
+        }
+
+        private object GetNext(IList<object> items, string curr)
+        {
+            if (String.IsNullOrWhiteSpace(curr))
+                return items[0];
+
+            var index = items.IndexOf(curr);
+            if (index == -1)
+                return items[0];
+
+            return items[(index + 1) % items.Count];
         }
 
         private void RefreshLocalSong()
         {
-            _localFileWatcher.Path = _config.saveLocationPath!;
             var songs = new DirectoryInfo(_config.saveLocationPath!).GetFileSystemInfos();
             var songInfos = new List<BeatMap>();
 
@@ -591,32 +632,26 @@ namespace OSUMapDownloader
                     name = name!.Substring(0, name.Length - 4);
 
                 songInfos.Add(new BeatMap(id, name));
-
-                /*
-                 * TODO
-                 * CHECK IF ON REMOTE EXIST
-                var item = _beatMapList.Where(x => x.Id == id).FirstOrDefault();
-                if (item != null)
-                {
-                    item.State = BeatMap.StateEnum.DOWNLOADED;
-                }
-
-                _beatMapList.Except(songInfos).ToList().ForEach();
-                */
             }
 
-            this.Invoke(() => Log($"Found {songInfos.Count} songs in local folder."));
-
-            lock (_gridLocalLock)
+            this.Invoke(() =>
             {
-                _localBeatMapList.Clear();
-                songInfos.ForEach(x => _localBeatMapList.Add(x));
-            }
+                Log($"Found {songInfos.Count} songs in local folder.");
+
+                lock (_gridLocalLock)
+                {
+                    _localBeatMapList.Clear();
+                    songInfos.ForEach(x => _localBeatMapList.Add(x));
+                }
+            });
         }
 
-        private void cmBtn_grid_local_refresh_Click(object sender, EventArgs e)
+        private void cb_enableWatch_CheckedChanged(object sender, EventArgs e)
         {
-            RefreshLocalSong();
+            _localFileWatcher.EnableRaisingEvents = cb_enableWatch.Checked;
+
+            if (cb_enableWatch.Checked)
+                RefreshLocalSong();
         }
 
         async Task<BeatMapSetsResponse?> FetchBeatmap(string query = "", int mode = -1, string? cursor = "", CancellationToken cancellationToken = default)
