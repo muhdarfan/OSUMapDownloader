@@ -324,6 +324,7 @@
             this.rtb_logBox.Size = new System.Drawing.Size(298, 396);
             this.rtb_logBox.TabIndex = 6;
             this.rtb_logBox.Text = "";
+            this.rtb_logBox.TextChanged += new System.EventHandler(this.rtb_logBox_TextChanged);
             // 
             // progressBar1
             // 
@@ -336,9 +337,9 @@
             // 
             this.lbl_total_fetched.AutoSize = true;
             this.lbl_total_fetched.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lbl_total_fetched.Location = new System.Drawing.Point(54, 0);
+            this.lbl_total_fetched.Location = new System.Drawing.Point(53, 0);
             this.lbl_total_fetched.Name = "lbl_total_fetched";
-            this.lbl_total_fetched.Size = new System.Drawing.Size(94, 23);
+            this.lbl_total_fetched.Size = new System.Drawing.Size(95, 23);
             this.lbl_total_fetched.TabIndex = 9;
             this.lbl_total_fetched.Text = "0";
             // 
@@ -372,7 +373,7 @@
             this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.label4.Location = new System.Drawing.Point(3, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(45, 23);
+            this.label4.Size = new System.Drawing.Size(44, 23);
             this.label4.TabIndex = 10;
             this.label4.Text = "Found";
             // 
@@ -410,6 +411,7 @@
             this.cb_hideDownloaded.TabIndex = 5;
             this.cb_hideDownloaded.Text = "Hide Downloaded";
             this.cb_hideDownloaded.UseVisualStyleBackColor = true;
+            this.cb_hideDownloaded.CheckedChanged += new System.EventHandler(this.cb_hideDownloaded_CheckedChanged);
             // 
             // tb_workerCount
             // 

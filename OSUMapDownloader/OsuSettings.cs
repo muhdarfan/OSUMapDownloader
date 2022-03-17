@@ -50,5 +50,31 @@ namespace OSUMapDownloader
                 this["workerCount"] = value;
             }
         }
+
+        [UserScopedSetting(), DefaultSettingValue("true")]
+        public bool enableFileWatch
+        {
+            get
+            {
+                return (bool)this["enableFileWatch"];
+            }
+            set
+            {
+                this["enableFileWatch"] = value;
+            }
+        }
+
+        [UserScopedSetting(), DefaultSettingValue("true")]
+        public bool hideDownloaded
+        {
+            get
+            {
+                return (bool)this["hideDownloaded"];
+            }
+            set
+            {
+                this["hideDownloaded"] = value;
+            }
+        }
     }
 }
