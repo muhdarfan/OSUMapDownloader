@@ -16,10 +16,4 @@
     <Content Include="bin\Debug\net6.0-windows\osu.ico" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="RestSharp" Version="107.3.0">
-      <TreatAsUsed>true</TreatAsUsed>
-    </PackageReference>
-  </ItemGroup>
-
 </Project>

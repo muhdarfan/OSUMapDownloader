@@ -16,10 +16,10 @@ namespace OSUMapDownloader
         const string API_CLIENT_SECRET = "ome2pYxl5kVoQIdzFzRL1DzV0RoDUeVOeMIQ7F8R";
 
         const string DOWNLOAD_LINK_1 = "https://chimu.moe/d";
-        const string DOWNLOAD_LINK_2 = "https://beatconnect.io/b/919187";
-        const string DOWNLOAD_LINK_3 = "https://nerina.pw/d/919187";
+        const string DOWNLOAD_LINK_2 = "https://beatconnect.io/b/";
+        const string DOWNLOAD_LINK_3 = "https://api.nerina.pw/d";
         const string DOWNLOAD_LINK_4 = "https://dl.sayobot.cn/beatmaps/download/full/id";
-        const string DOWNLOAD_LINK_5 = "https://dl.sayobot.cn/beatmaps/download/novideo/919187";
+        const string DOWNLOAD_LINK_5 = "https://dl.sayobot.cn/beatmaps/download/novideo/";
 
         const string API_ENDPOINT = "https://osu.ppy.sh/api/v2/";
         static Uri oauthURI = new Uri($"https://osu.ppy.sh/oauth/authorize?client_id={API_CLIENT_ID}&redirect_uri=http://localhost:31170/&response_type=code&scope=public");
@@ -27,9 +27,15 @@ namespace OSUMapDownloader
 
         private DateTime _lastTimeFileWatch;
 
+        private List<string> _downloadMirrorLink = new List<string>()
+        {
+            DOWNLOAD_LINK_1,
+            DOWNLOAD_LINK_3,
+            DOWNLOAD_LINK_5,
+            DOWNLOAD_LINK_2,
+        };
         private BindingList<BeatMap> _beatMapList, _localBeatMapList;
 
-        //static RestClient _client;
         private static HttpClient? _httpClient, _downloadClient;
         private static HttpListener? _httpListener;
 
@@ -47,6 +53,7 @@ namespace OSUMapDownloader
         private bool _stopRequested = false;
 
         private object _gridLocalLock = new object();
+        private object _padLock = new object();
 
         public MainForm()
         {
@@ -79,13 +86,14 @@ namespace OSUMapDownloader
                 CookieContainer = cookies
             };
 
-            //_client = new RestClient(socketsHttpHandler);
             _httpClient = new HttpClient(socketsHttpHandler);
             _downloadClient = new HttpClient(socketsHttpHandler);
 
             _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36");
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config.token!.AccessToken!);
+
+            _downloadClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36");
 
             System.Net.WebRequest.DefaultWebProxy = null;
 
@@ -100,7 +108,7 @@ namespace OSUMapDownloader
 
             _localFileWatcher = new FileSystemWatcher(_config.saveLocationPath!);
 
-            _localFileWatcher.EnableRaisingEvents = true;
+            _localFileWatcher.EnableRaisingEvents = _config.enableFileWatch;
             _localFileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.DirectoryName;
             //_localFileWatcher.SynchronizingObject = this;
             _localFileWatcher.Filter = "*.osz";
@@ -128,6 +136,8 @@ namespace OSUMapDownloader
             tb_saveLocationPath.Text = _config.saveLocationPath;
             tb_token.Text = _config.token?.AccessToken! ?? "";
 
+            cb_enableWatch.Checked = _config.enableFileWatch;
+            cb_hideDownloaded.Checked = _config.hideDownloaded;
             RefreshLocalSong();
         }
 
@@ -373,11 +383,6 @@ namespace OSUMapDownloader
             }
         }
 
-        private void btn_clearLog_Click(object sender, EventArgs e)
-        {
-            rtb_logBox.Text = "";
-        }
-
         private async void btn_generateToken_Click(object sender, EventArgs e)
         {
             if (_isRunning)
@@ -536,6 +541,11 @@ namespace OSUMapDownloader
             }
         }
 
+        private void btn_clearLog_Click(object sender, EventArgs e)
+        {
+            rtb_logBox.Text = "";
+        }
+
         private void tb_token_Leave(object sender, EventArgs e)
         {
             _config.token!.AccessToken = tb_token.Text;
@@ -577,13 +587,27 @@ namespace OSUMapDownloader
             RefreshLocalSong();
         }
 
+        private void cb_enableWatch_CheckedChanged(object sender, EventArgs e)
+        {
+            _config.enableFileWatch = cb_enableWatch.Checked;
+            _localFileWatcher.EnableRaisingEvents = cb_enableWatch.Checked;
+
+            if (cb_enableWatch.Checked)
+                RefreshLocalSong();
+        }
+
         #region Method
         private void Log(string message = "", bool newLine = true)
         {
             if (String.IsNullOrEmpty(message))
                 rtb_logBox.Text += Environment.NewLine;
 
-            this.Invoke(() => rtb_logBox.Text += $"[{DateTime.Now}] {message}" + (newLine ? Environment.NewLine : ""));
+            String text = $"[{DateTime.Now}] {message}" + (newLine ? Environment.NewLine : "");
+
+            this.Invoke(() => rtb_logBox.Text += text);
+
+            lock (_padLock)
+                File.AppendAllText(Path.Combine(Application.StartupPath, $"log-{DateTime.Now.ToString("yyyyMMdd")}.txt"), text);
         }
 
         private void SetInputEnabled(bool enabled = true)
@@ -596,18 +620,7 @@ namespace OSUMapDownloader
             this.tb_workerCount.Enabled = enabled;
             this.cb_hideDownloaded.Enabled = enabled;
             this.cb_enableWatch.Enabled = enabled;
-        }
-
-        private object GetNext(IList<object> items, string curr)
-        {
-            if (String.IsNullOrWhiteSpace(curr))
-                return items[0];
-
-            var index = items.IndexOf(curr);
-            if (index == -1)
-                return items[0];
-
-            return items[(index + 1) % items.Count];
+            this.btn_changeSaveLocationPath.Enabled = enabled;
         }
 
         private void RefreshLocalSong()
@@ -634,24 +647,25 @@ namespace OSUMapDownloader
                 songInfos.Add(new BeatMap(id, name));
             }
 
-            this.Invoke(() =>
+            lock (_gridLocalLock)
             {
-                Log($"Found {songInfos.Count} songs in local folder.");
-
-                lock (_gridLocalLock)
+                this.Invoke(() =>
                 {
                     _localBeatMapList.Clear();
                     songInfos.ForEach(x => _localBeatMapList.Add(x));
-                }
-            });
+                });
+            }
         }
 
-        private void cb_enableWatch_CheckedChanged(object sender, EventArgs e)
+        private void cb_hideDownloaded_CheckedChanged(object sender, EventArgs e)
         {
-            _localFileWatcher.EnableRaisingEvents = cb_enableWatch.Checked;
+            _config.hideDownloaded = cb_hideDownloaded.Checked;
+        }
 
-            if (cb_enableWatch.Checked)
-                RefreshLocalSong();
+        private void rtb_logBox_TextChanged(object sender, EventArgs e)
+        {
+            rtb_logBox.SelectionStart = rtb_logBox.Text.Length;
+            rtb_logBox.ScrollToCaret();
         }
 
         async Task<BeatMapSetsResponse?> FetchBeatmap(string query = "", int mode = -1, string? cursor = "", CancellationToken cancellationToken = default)
@@ -659,7 +673,6 @@ namespace OSUMapDownloader
             BeatMapSetsResponse? res = null;
 
             var builder = new UriBuilder(API_ENDPOINT + "beatmapsets/search");
-            //var builder = new UriBuilder("https://osu.ppy.sh/beatmapsets/search");
             builder.Port = -1;
 
             var param = HttpUtility.ParseQueryString(builder.Query);
@@ -672,8 +685,6 @@ namespace OSUMapDownloader
                 param["cursor_string"] = cursor;
 
             builder.Query = param.ToString();
-
-            Debug.WriteLine($"Query {builder.Uri.ToString()}");
 
             var response = await _httpClient!.GetAsync(builder.Uri, cancellationToken);
             response.EnsureSuccessStatusCode();
@@ -691,39 +702,62 @@ namespace OSUMapDownloader
 
         private async Task<bool> Download(BeatMap map, CancellationToken token = default)
         {
-            this.Invoke(() =>
-            {
-                Log($"Downloading [{map.Id}] {map.Title} (Thread {Thread.CurrentThread.ManagedThreadId})");
-                //Debug.WriteLine($"[Thread {Thread.CurrentThread.ManagedThreadId}] Downloading {map.Title}...");
-                //Debug.WriteLine($@"{Application.StartupPath}/download/{map.Id} {map.Artist} - {map.Title}.osz");
-            });
+            var dLMirror = new Queue<string>(_downloadMirrorLink);
+            int attempt = 1;
+            int mirrorCount = _downloadMirrorLink.Count;
 
-            try
+            while (dLMirror.Any() && !token.IsCancellationRequested)
             {
-                map.State = BeatMap.StateEnum.DOWNLOADING;
-
                 token.ThrowIfCancellationRequested();
-                var responseStream = await _downloadClient!.GetStreamAsync($"{DOWNLOAD_LINK_1}/{map.Id}", token);
 
-                using var fileStream = new FileStream($@"{_config.saveLocationPath}/{map.GetSongFileName()}", FileMode.Create);
-                await responseStream.CopyToAsync(fileStream, token);
-                
-                map.State = BeatMap.StateEnum.DOWNLOADED;
-
-                return true;
-            } 
-            catch (Exception ex)
-            {
-                map.State = BeatMap.StateEnum.FAILED;
-                
-                if (ex is not OperationCanceledException || ex is not TaskCanceledException)
+                try
                 {
-                    this.Invoke(() => {
-                        Log($"[ERROR] Failed to download {map.GetSongFileName()}");
-                        Log("Delaying 3 seconds before continuing...");
+                    var link = dLMirror.Dequeue();
+
+                    map.State = BeatMap.StateEnum.DOWNLOADING;
+
+                    this.Invoke(() =>
+                    {
+                        Log($"Downloading [{map.Id}] {map.Title} (Attempt #{attempt}/{mirrorCount})");
+                        //Debug.WriteLine($"[Thread {Thread.CurrentThread.ManagedThreadId}] Downloading {map.Title}...");
+                        //Debug.WriteLine($@"{Application.StartupPath}/download/{map.Id} {map.Artist} - {map.Title}.osz");
                     });
-                    Debug.WriteLine(ex.Message);
-                    await Task.Delay(3000);
+
+                    var responseStream = await _downloadClient!.GetStreamAsync($"{link}/{map.Id}", token);
+
+                    using var fileStream = new FileStream($@"{_config.saveLocationPath}/{map.GetSongFileName()}", FileMode.Create);
+                    await responseStream.CopyToAsync(fileStream, token);
+
+                    if (((double)fileStream.Length / 1024) < 100)
+                        throw new FileFormatException("Invalid file size! < 100Kb");
+
+                    map.State = BeatMap.StateEnum.DOWNLOADED;
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    map.State = BeatMap.StateEnum.FAILED;
+
+                    if (ex is OperationCanceledException || ex is TaskCanceledException)
+                    {
+                        if (File.Exists($@"{_config.saveLocationPath}/{map.GetSongFileName()}"))
+                            File.Delete($@"{_config.saveLocationPath}/{map.GetSongFileName()}");
+                    }
+                    else
+                    {
+                        if (ex is FileFormatException && File.Exists($@"{_config.saveLocationPath}/{map.GetSongFileName()}"))
+                            File.Delete($@"{_config.saveLocationPath}/{map.GetSongFileName()}");
+
+                        this.Invoke(() =>
+                        {
+                            Log($"[ERROR] Failed to download {map.GetSongFileName()}. (Message: {ex.Message})");
+                            Log("Delaying 5 seconds before continuing...");
+                        });
+
+                        attempt++;
+                        await Task.Delay(TimeSpan.FromSeconds(5), token);
+                    }
                 }
             }
 
