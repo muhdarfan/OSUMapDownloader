@@ -12,8 +12,8 @@ namespace OSUMapDownloader
 {
     public partial class MainForm : Form
     {
-        const string API_CLIENT_ID = "13268";
-        const string API_CLIENT_SECRET = "ome2pYxl5kVoQIdzFzRL1DzV0RoDUeVOeMIQ7F8R";
+        const string API_CLIENT_ID = "CLIENT_ID"; // PLEASE CHANGE THIS ACCORDING TO YOUR APP KEY
+        const string API_CLIENT_SECRET = "CLIENT_SECRET"; // PLEASE CHANGE THIS ACCORDING TO YOUR APP KEY
 
         const string DOWNLOAD_LINK_1 = "https://chimu.moe/d";
         const string DOWNLOAD_LINK_2 = "https://beatconnect.io/b/";
